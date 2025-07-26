@@ -2,56 +2,63 @@ import React, { useState } from "react";
 import { db } from "../config/firebase";
 import { collection, addDoc } from "firebase/firestore";
 
-function AttendanceForm() {
+const AttendanceForm = () => {
   const [className, setClassName] = useState("");
   const [date, setDate] = useState("");
-  const [students, setStudents] = useState([{ name: "", present: false }]);
+  const [present, setPresent] = useState("");
 
-  const handleSubmit = async () => {
-    try {
-      await addDoc(collection(db, "attendance"), {
-        className,
-        date,
-        students
-      });
-      alert("Attendance saved!");
-    } catch (err) {
-      alert("Error: " + err.message);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!className || !date || !present) {
+      alert("Please fill all fields");
+      return;
     }
-  };
-
-  const updateStudent = (index, field, value) => {
-    const updated = [...students];
-    updated[index][field] = value;
-    setStudents(updated);
+    await addDoc(collection(db, "attendance"), {
+      className,
+      date,
+      present: present.split(",").map((s) => s.trim()),
+    });
+    setClassName("");
+    setDate("");
+    setPresent("");
   };
 
   return (
-    <div>
-      <h2>Mark Attendance</h2>
-      <input placeholder="Class Name" onChange={(e) => setClassName(e.target.value)} />
-      <input type="date" onChange={(e) => setDate(e.target.value)} />
-      {students.map((student, i) => (
-        <div key={i}>
-          <input
-            placeholder="Student Name"
-            value={student.name}
-            onChange={(e) => updateStudent(i, "name", e.target.value)}
-          />
-          <label>
-            Present:
-            <input
-              type="checkbox"
-              checked={student.present}
-              onChange={(e) => updateStudent(i, "present", e.target.checked)}
-            />
-          </label>
-        </div>
-      ))}
-      <button onClick={() => setStudents([...students, { name: "", present: false }])}>Add Student</button>
-      <button onClick={handleSubmit}>Submit Attendance</button>
+    <div className="bg-white p-6 rounded-xl shadow mb-8 transition hover:shadow-lg">
+      <h3 className="text-lg font-semibold text-blue-700 mb-4">📝 Mark Attendance</h3>
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <input
+          type="text"
+          placeholder="Class (e.g., 10A)"
+          value={className}
+          onChange={(e) => setClassName(e.target.value)}
+          className="p-2 border rounded focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="p-2 border rounded focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        <textarea
+          rows="3"
+          placeholder="Comma-separated present student names"
+          value={present}
+          onChange={(e) => setPresent(e.target.value)}
+          className="p-2 border rounded focus:ring-2 focus:ring-blue-500"
+          required
+        ></textarea>
+        <button
+          type="submit"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded transition duration-300"
+        >
+          Submit
+        </button>
+      </form>
     </div>
   );
-}
+};
 
 export default AttendanceForm;
